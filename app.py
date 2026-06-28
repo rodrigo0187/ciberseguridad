@@ -1,7 +1,8 @@
 from flask import Flask , request
+from prometheus_client import start_http_server, Summary
 
 app = Flask(__name__)
-
+REQUEST_TIME= Summary()
 @app.route('/hello')
 def hello():
     """Endpoint para saludar al usuario
