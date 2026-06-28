@@ -27,19 +27,15 @@ pipeline {
                 stage('Dependency-Check') {
                     steps {
                         echo 'Ejecutando OWASP Dependency-Check (Análisis Estático)...'
-                        // Usamos withEnv para limpiar las variables corruptas heredadas de Git Bash
-                        withEnv(["DOCKER_CERT_PATH=", "DOCKER_TLS_VERIFY="]) {
-                            sh 'docker run --rm -v /var/jenkins_home/workspace/PipelineDevSecOps-Duoc:/src owasp/dependency-check:latest --scan /src --format HTML --format XML --out /src'
-                        }
+                        // Vaciamos las variables de entorno de Windows directamente al ejecutar el comando en Linux
+                        sh 'env DOCKER_CERT_PATH= DOCKER_TLS_VERIFY= docker run --rm -v /var/jenkins_home/workspace/PipelineDevSecOps-Duoc:/src owasp/dependency-check:latest --scan /src --format HTML --format XML --out /src'
                     }
                 }
                 stage('OWASP ZAP DAST') {
                     steps {
                         echo 'Ejecutando análisis dinámico con OWASP ZAP...'
-                        // Usamos withEnv para limpiar las variables corruptas heredadas de Git Bash
-                        withEnv(["DOCKER_CERT_PATH=", "DOCKER_TLS_VERIFY="]) {
-                            sh 'docker run --rm --network jenkins ghcr.io/zaproxy/zaproxy:stable zap-baseline.py -t http://jenkins-blueocean:8080 -I || true'
-                        }
+                        // Vaciamos las variables de entorno de Windows directamente al ejecutar el comando en Linux
+                        sh 'env DOCKER_CERT_PATH= DOCKER_TLS_VERIFY= docker run --rm --network jenkins ghcr.io/zaproxy/zaproxy:stable zap-baseline.py -t http://jenkins-blueocean:8080 -I || true'
                     }
                 }
             }
