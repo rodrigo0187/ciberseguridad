@@ -27,15 +27,15 @@ pipeline {
                 stage('Dependency-Check') {
                     steps {
                         echo 'Ejecutando OWASP Dependency-Check (Análisis Estático)...'
-                        // Vaciamos las variables de entorno de Windows directamente al ejecutar el comando en Linux
-                        sh 'env DOCKER_CERT_PATH= DOCKER_TLS_VERIFY= docker run --rm -v /var/jenkins_home/workspace/PipelineDevSecOps-Duoc:/src owasp/dependency-check:latest --scan /src --format HTML --format XML --out /src'
+                        // Usamos --host unix:///var/run/docker.sock para saltarnos TLS e ir directo al canal nativo
+                        sh 'docker --host unix:///var/run/docker.sock run --rm -v /var/jenkins_home/workspace/PipelineDevSecOps-Duoc:/src owasp/dependency-check:latest --scan /src --format HTML --format XML --out /src'
                     }
                 }
                 stage('OWASP ZAP DAST') {
                     steps {
                         echo 'Ejecutando análisis dinámico con OWASP ZAP...'
-                        // Vaciamos las variables de entorno de Windows directamente al ejecutar el comando en Linux
-                        sh 'env DOCKER_CERT_PATH= DOCKER_TLS_VERIFY= docker run --rm --network jenkins ghcr.io/zaproxy/zaproxy:stable zap-baseline.py -t http://jenkins-blueocean:8080 -I || true'
+                        // Usamos --host unix:///var/run/docker.sock para saltarnos TLS e ir directo al canal nativo
+                        sh 'docker --host unix:///var/run/docker.sock run --rm --network jenkins ghcr.io/zaproxy/zaproxy:stable zap-baseline.py -t http://jenkins-blueocean:8080 -I || true'
                     }
                 }
             }
