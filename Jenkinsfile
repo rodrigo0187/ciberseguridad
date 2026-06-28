@@ -1,6 +1,12 @@
 pipeline {
     agent any
 
+    // Aquí forzamos el borrado global de las variables que causan el conflicto
+    environment {
+        DOCKER_CERT_PATH = ''
+        DOCKER_TLS_VERIFY = ''
+    }
+
     stages {
         stage('Build') {
             steps {
@@ -27,15 +33,13 @@ pipeline {
                 stage('Dependency-Check') {
                     steps {
                         echo 'Ejecutando OWASP Dependency-Check (Análisis Estático)...'
-                        // Usamos --host unix:///var/run/docker.sock para saltarnos TLS e ir directo al canal nativo
-                        sh 'docker --host unix:///var/run/docker.sock run --rm -v /var/jenkins_home/workspace/PipelineDevSecOps-Duoc:/src owasp/dependency-check:latest --scan /src --format HTML --format XML --out /src'
+                        sh 'docker run --rm -v /var/jenkins_home/workspace/PipelineDevSecOps-Duoc:/src owasp/dependency-check:latest --scan /src --format HTML --format XML --out /src'
                     }
                 }
                 stage('OWASP ZAP DAST') {
                     steps {
                         echo 'Ejecutando análisis dinámico con OWASP ZAP...'
-                        // Usamos --host unix:///var/run/docker.sock para saltarnos TLS e ir directo al canal nativo
-                        sh 'docker --host unix:///var/run/docker.sock run --rm --network jenkins ghcr.io/zaproxy/zaproxy:stable zap-baseline.py -t http://jenkins-blueocean:8080 -I || true'
+                        sh 'docker run --rm --network jenkins ghcr.io/zaproxy/zaproxy:stable zap-baseline.py -t http://jenkins-blueocean:8080 -I || true'
                     }
                 }
             }
