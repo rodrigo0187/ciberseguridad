@@ -1,20 +1,21 @@
-from flask import Flask , request
-from prometheus_client import start_http_server, Summary
+from flask import Flask, request
+from prometheus_client import generate_latest, start_http_server, Summary, REGISTRY
 
 app = Flask(__name__)
-REQUEST_TIME= Summary()
+
+# Línea corregida:
+REQUEST_TIME = Summary('request_processing_seconds', 'Time spent processing request')
+
+@app.route('/metrics')
+def metrics():
+    return generate_latest(REGISTRY), 200, {'Content-Type': 'text/plain; charset=utf-8'}
+
 @app.route('/hello')
+@REQUEST_TIME.time()
 def hello():
-    """Endpoint para saludar al usuario
-    
-    Parámetros:
-    name(str): Nombre del usuario
+    name = request.args.get('name', 'Mundo')
+    return f"Hello, {name}!"
 
-    Returns:
-        str: Mensaje de saludo.
-    """    
-    name= request.args.get('name')
-    return f'hello {name}'
-
-if __name__ == "main":
-    app.run(debug=True)
+if __name__ == '__main__':
+    start_http_server(8000)
+    app.run(host='0.0.0.0', port=5000)
