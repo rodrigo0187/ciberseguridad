@@ -27,15 +27,19 @@ pipeline {
                 stage('Dependency-Check') {
                     steps {
                         echo 'Ejecutando OWASP Dependency-Check (Análisis Estático)...'
-                        // Ejecución directa mediante contenedor Docker para evitar problemas de rutas del ejecutable local
-                        sh 'docker run --rm -v /var/jenkins_home/workspace/PipelineDevSecOps-Duoc:/src owasp/dependency-check:latest --scan /src --format HTML --format XML --out /src'
+                        // Usamos withEnv para limpiar las variables corruptas heredadas de Git Bash
+                        withEnv(["DOCKER_CERT_PATH=", "DOCKER_TLS_VERIFY="]) {
+                            sh 'docker run --rm -v /var/jenkins_home/workspace/PipelineDevSecOps-Duoc:/src owasp/dependency-check:latest --scan /src --format HTML --format XML --out /src'
+                        }
                     }
                 }
                 stage('OWASP ZAP DAST') {
                     steps {
                         echo 'Ejecutando análisis dinámico con OWASP ZAP...'
-                        // Forzamos el uso del socket local removiendo la verificación TLS rígida en este paso intermedio
-                        sh 'docker run --rm --network jenkins ghcr.io/zaproxy/zaproxy:stable zap-baseline.py -t http://jenkins-blueocean:8080 -I || true'
+                        // Usamos withEnv para limpiar las variables corruptas heredadas de Git Bash
+                        withEnv(["DOCKER_CERT_PATH=", "DOCKER_TLS_VERIFY="]) {
+                            sh 'docker run --rm --network jenkins ghcr.io/zaproxy/zaproxy:stable zap-baseline.py -t http://jenkins-blueocean:8080 -I || true'
+                        }
                     }
                 }
             }
@@ -52,7 +56,6 @@ pipeline {
     post {
         always {
             echo 'Publicando reportes generados...'
-            // Archiva el reporte XML generado para cumplir con la entrega de la guía
             archiveArtifacts artifacts: '**/dependency-check-report.*', allowEmptyArchive: true
         }
     }
